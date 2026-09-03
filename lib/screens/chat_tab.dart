@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../utils/theme.dart';
 import '../providers/chat_provider.dart';
+import '../providers/speech_provider.dart';
 
 class ChatTab extends ConsumerStatefulWidget {
   const ChatTab({super.key});
@@ -13,6 +14,7 @@ class ChatTab extends ConsumerStatefulWidget {
 class _ChatTabState extends ConsumerState<ChatTab> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  double _animationValue = 1.2;
 
   void _sendMessage() {
     final text = _messageController.text.trim();
@@ -48,11 +50,25 @@ class _ChatTabState extends ConsumerState<ChatTab> {
   Widget build(BuildContext context) {
     final chatState = ref.watch(chatProvider);
     final messages = chatState.messages;
+    final speechState = ref.watch(speechProvider);
+    final isListening = speechState.isListening;
 
     // Trigger auto-scroll on new messages
     ref.listen(chatProvider, (prev, next) {
       if (prev?.messages.length != next.messages.length) {
         _scrollToBottom();
+      }
+    });
+
+    // Listen to speech recognition errors and display snackbar warnings
+    ref.listen(speechProvider, (prev, next) {
+      if (next.errorMessage != null && next.errorMessage != prev?.errorMessage) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(next.errorMessage!),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
       }
     });
 
@@ -200,23 +216,41 @@ class _ChatTabState extends ConsumerState<ChatTab> {
                       children: [
                         const SizedBox(width: 12),
                         IconButton(
-                          icon: const Icon(Icons.mic, color: AppColors.accent),
+                          icon: isListening
+                              ? TweenAnimationBuilder<double>(
+                                  tween: Tween(begin: 1.0, end: _animationValue),
+                                  duration: const Duration(milliseconds: 600),
+                                  onEnd: () {
+                                    setState(() {
+                                      _animationValue = _animationValue == 1.2 ? 0.8 : 1.2;
+                                    });
+                                  },
+                                  builder: (context, value, child) {
+                                    return Transform.scale(
+                                      scale: value,
+                                      child: const Icon(Icons.mic, color: Colors.redAccent),
+                                    );
+                                  },
+                                )
+                              : const Icon(Icons.mic, color: AppColors.accent),
                           onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Listening for translation... Speak now.'),
-                                backgroundColor: AppColors.primary,
-                              ),
-                            );
+                            final notifier = ref.read(speechProvider.notifier);
+                            if (isListening) {
+                              notifier.stopListening();
+                            } else {
+                              notifier.startListening((words) {
+                                _messageController.text = words;
+                              });
+                            }
                           },
                         ),
                         Expanded(
                           child: TextField(
                             controller: _messageController,
-                            decoration: const InputDecoration(
-                              hintText: 'Ask or translate...',
+                            decoration: InputDecoration(
+                              hintText: isListening ? 'Listening...' : 'Ask or translate...',
                               border: InputBorder.none,
-                              contentPadding: EdgeInsets.symmetric(horizontal: 8),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 8),
                             ),
                             onSubmitted: (v) => _sendMessage(),
                           ),

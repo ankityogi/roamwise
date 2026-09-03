@@ -23,7 +23,7 @@ class ChatState {
       messages: [
         {
           'isMe': false,
-          'text': "Bonjour! I am your RoamWise Travel Assistant. \nHow can I help you explore today? Ask me for nearby sights, translation help, or travel tips!",
+          'text': "Hello! I am your RoamWise Travel Assistant. \nHow can I help you explore today? Ask me for nearby sights, translation help, or travel tips!",
           'time': timeStr,
         }
       ],

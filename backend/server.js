@@ -6,6 +6,7 @@ const authRoutes = require('./routes/auth.routes');
 const tripRoutes = require('./routes/trip.routes');
 const chatRoutes = require('./routes/chat.routes');
 const exploreRoutes = require('./routes/explore.routes');
+const bookmarkRoutes = require('./routes/bookmark.routes');
 require('dotenv').config();
 
 const app = express();
@@ -26,6 +27,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/trips', tripRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/explore', exploreRoutes);
+app.use('/api/bookmarks', bookmarkRoutes);
 
 // Health Check Endpoint
 app.get('/api/health', (req, res) => {

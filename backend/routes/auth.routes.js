@@ -4,6 +4,7 @@ const {
   registerUser,
   loginUser,
   getUserProfile,
+  updateEmergencyContacts,
 } = require('../controllers/auth.controller');
 const { protect } = require('../middleware/auth.middleware');
 
@@ -18,5 +19,9 @@ router.post('/login', loginUser);
 // Protected route to fetch profile details of current logged-in user
 // URL: GET /api/auth/profile
 router.get('/profile', protect, getUserProfile);
+
+// Protected route to update emergency contacts of current logged-in user
+// URL: PUT /api/auth/emergency-contacts
+router.put('/emergency-contacts', protect, updateEmergencyContacts);
 
 module.exports = router;

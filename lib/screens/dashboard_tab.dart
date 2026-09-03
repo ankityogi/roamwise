@@ -3,11 +3,58 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../utils/theme.dart';
 import '../providers/navigation_provider.dart';
 import '../providers/trip_provider.dart';
+import '../providers/location_provider.dart';
+import '../providers/auth_provider.dart';
+import '../providers/bookmark_provider.dart';
+import '../providers/explore_provider.dart';
 
 class DashboardTab extends ConsumerWidget {
   const DashboardTab({super.key});
 
-  void _showEmergencyDialog(BuildContext context) {
+  void _showEmergencyDialog(BuildContext context, WidgetRef ref) {
+    final locationState = ref.watch(locationProvider);
+    final String cityString = locationState.currentCity ?? 'Surat, India';
+    
+    String country = 'India';
+    if (cityString.contains(',')) {
+      country = cityString.split(',').last.trim();
+    } else {
+      country = cityString.trim();
+    }
+
+    String emergencyNumber = '112';
+    String policeNumber = '100';
+    String ambulanceNumber = '108';
+    String fireNumber = '101';
+
+    final lowerCountry = country.toLowerCase();
+    if (lowerCountry == 'united states' || lowerCountry == 'usa' || lowerCountry == 'canada') {
+      emergencyNumber = '911';
+      policeNumber = '911';
+      ambulanceNumber = '911';
+      fireNumber = '911';
+    } else if (lowerCountry == 'united kingdom' || lowerCountry == 'uk' || lowerCountry == 'ireland') {
+      emergencyNumber = '999';
+      policeNumber = '999';
+      ambulanceNumber = '999';
+      fireNumber = '999';
+    } else if (lowerCountry == 'australia') {
+      emergencyNumber = '000';
+      policeNumber = '000';
+      ambulanceNumber = '000';
+      fireNumber = '000';
+    } else if (lowerCountry == 'japan') {
+      emergencyNumber = '110 / 119';
+      policeNumber = '110';
+      ambulanceNumber = '119';
+      fireNumber = '119';
+    } else if (lowerCountry == 'france' || lowerCountry == 'germany' || lowerCountry == 'spain' || lowerCountry == 'italy' || lowerCountry == 'europe') {
+      emergencyNumber = '112';
+      policeNumber = '112';
+      ambulanceNumber = '112';
+      fireNumber = '112';
+    }
+
     showDialog(
       context: context,
       builder: (context) {
@@ -30,16 +77,16 @@ class DashboardTab extends ConsumerWidget {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                'You are currently in Paris, France. Standard European emergency number is 112.',
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+              Text(
+                'You are currently in $cityString. Standard emergency number is $emergencyNumber.',
+                style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
               ),
               const SizedBox(height: 16),
-              _buildEmergencyContactRow(Icons.local_police, 'Police', '17 (or 112)'),
+              _buildEmergencyContactRow(Icons.local_police, 'Police', policeNumber),
               const Divider(color: AppColors.cardBorder, height: 16),
-              _buildEmergencyContactRow(Icons.medical_services, 'Medical / Ambulance', '15 (or 112)'),
+              _buildEmergencyContactRow(Icons.medical_services, 'Medical / Ambulance', ambulanceNumber),
               const Divider(color: AppColors.cardBorder, height: 16),
-              _buildEmergencyContactRow(Icons.local_fire_department, 'Fire', '18 (or 112)'),
+              _buildEmergencyContactRow(Icons.local_fire_department, 'Fire', fireNumber),
             ],
           ),
           actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -51,7 +98,7 @@ class DashboardTab extends ConsumerWidget {
             ElevatedButton.icon(
               onPressed: () {
                 Navigator.pop(context);
-                _showSOSCallingOverlay(context);
+                _showSOSCallingOverlay(context, ref);
               },
               icon: const Icon(Icons.emergency_share, size: 18),
               label: const Text('Simulate SOS Call'),
@@ -69,7 +116,22 @@ class DashboardTab extends ConsumerWidget {
     );
   }
 
-  void _showSOSCallingOverlay(BuildContext context) {
+  void _showSOSCallingOverlay(BuildContext context, WidgetRef ref) {
+    final locationState = ref.read(locationProvider);
+    final position = locationState.currentPosition;
+    final double lat = position?.latitude ?? 48.8566;
+    final double lng = position?.longitude ?? 2.3522;
+    final String city = locationState.currentCity ?? 'Paris, France';
+
+    final authState = ref.read(authProvider);
+    final contacts = authState.user?.emergencyContacts ?? [];
+
+    String contactsMessage = 'Broadcasting distress coordinates to local dispatch...';
+    if (contacts.isNotEmpty) {
+      final namesList = contacts.map((c) => c.name).join(' & ');
+      contactsMessage = 'SOS message dispatched to emergency contacts: $namesList';
+    }
+
     showGeneralDialog(
       context: context,
       barrierDismissible: false,
@@ -77,13 +139,12 @@ class DashboardTab extends ConsumerWidget {
       transitionDuration: const Duration(milliseconds: 300),
       pageBuilder: (context, anim1, anim2) {
         return Scaffold(
-          backgroundColor: const Color(0xFF0F0808), // Dark reddish black
+          backgroundColor: const Color(0xFF0F0808),
           body: SafeArea(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Spacer(),
-                // Pulsing ring simulation
                 TweenAnimationBuilder<double>(
                   tween: Tween(begin: 1.0, end: 1.3),
                   duration: const Duration(seconds: 1),
@@ -119,16 +180,20 @@ class DashboardTab extends ConsumerWidget {
                     letterSpacing: 2,
                   ),
                 ),
-                const SizedBox(height: 12),
-                const Text(
-                  'Simulating distress call to local dispatch...',
-                  style: TextStyle(color: Colors.white70, fontSize: 14),
+                const SizedBox(height: 16),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Text(
+                    contactsMessage,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.4),
+                  ),
                 ),
-                const SizedBox(height: 6),
-                const Text(
-                  'Transmitting mock GPS coordinates:\n48.8566° N, 2.3522° E (Paris, France)',
+                const SizedBox(height: 12),
+                Text(
+                  'Transmitting coordinates:\n${lat.toStringAsFixed(6)}° N, ${lng.toStringAsFixed(6)}° E ($city)',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.white38, fontSize: 12, height: 1.5),
+                  style: const TextStyle(color: Colors.white38, fontSize: 12, height: 1.5),
                 ),
                 const Spacer(),
                 Padding(
@@ -224,7 +289,9 @@ class DashboardTab extends ConsumerWidget {
                       const Icon(Icons.location_on, size: 16, color: AppColors.accent),
                       const SizedBox(width: 4),
                       Text(
-                        activeTrip != null ? activeTrip.destination : 'Paris, France',
+                        activeTrip != null
+                            ? activeTrip.destination
+                            : (ref.watch(locationProvider).currentCity ?? 'Surat, India'),
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               color: AppColors.textSecondary,
                             ),
@@ -288,7 +355,7 @@ class DashboardTab extends ConsumerWidget {
                 icon: Icons.emergency,
                 label: 'Emergency',
                 color: Colors.redAccent,
-                onTap: () => _showEmergencyDialog(context),
+                onTap: () => _showEmergencyDialog(context, ref),
               ),
               _buildQuickToolItem(
                 context,
@@ -304,9 +371,7 @@ class DashboardTab extends ConsumerWidget {
                 icon: Icons.favorite,
                 label: 'Saved',
                 color: AppColors.primary,
-                onTap: () {
-                  ref.read(activeTabProvider.notifier).state = 3; // Planner tab
-                },
+                onTap: () => _showSavedBookmarksPanel(context, ref),
               ),
             ],
           ),
@@ -405,7 +470,7 @@ class DashboardTab extends ConsumerWidget {
                           const Icon(Icons.add_road, color: AppColors.accent, size: 36),
                           const SizedBox(height: 12),
                           const Text(
-                            'No active itineraries yet 🌍',
+                            'No active itineraries yet ',
                             textAlign: TextAlign.center,
                             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.textPrimary),
                           ),
@@ -621,5 +686,172 @@ class DashboardTab extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  void _showSavedBookmarksPanel(BuildContext context, WidgetRef ref) {
+    ref.read(bookmarkProvider.notifier).fetchBookmarks();
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return Consumer(
+          builder: (context, ref, child) {
+            final bookmarkState = ref.watch(bookmarkProvider);
+            final bookmarks = bookmarkState.bookmarks;
+
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Row(
+                          children: [
+                            Icon(Icons.favorite, color: Colors.redAccent),
+                            SizedBox(width: 8),
+                            Text(
+                              'Saved Bookmarks',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close, color: AppColors.textSecondary),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    if (bookmarkState.isLoading)
+                      const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(32.0),
+                          child: CircularProgressIndicator(color: AppColors.accent),
+                        ),
+                      )
+                    else if (bookmarks.isEmpty)
+                      const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(40.0),
+                          child: Column(
+                            children: [
+                              Icon(Icons.favorite_border, size: 48, color: AppColors.cardBorder),
+                              SizedBox(height: 12),
+                              Text(
+                                'No saved places yet.',
+                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                'Go to the Explore tab and bookmark\nyour favorite travel destinations.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    else
+                      Flexible(
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: bookmarks.length,
+                          itemBuilder: (context, index) {
+                            final bookmark = bookmarks[index];
+                            return Card(
+                              margin: const EdgeInsets.only(bottom: 8),
+                              child: ListTile(
+                                leading: Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary.withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Icon(
+                                    _getCategoryIcon(bookmark.category),
+                                    color: AppColors.accent,
+                                    size: 20,
+                                  ),
+                                ),
+                                title: Text(
+                                  bookmark.title,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                subtitle: Text(
+                                  '${bookmark.distance} | ${bookmark.price}',
+                                  style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                                ),
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                                      onPressed: () {
+                                        ref.read(bookmarkProvider.notifier).deleteBookmark(bookmark.id);
+                                      },
+                                    ),
+                                    const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+                                  ],
+                                ),
+                                onTap: () {
+                                  ref.read(activeTabProvider.notifier).state = 1;
+                                  
+                                  final place = PlaceModel(
+                                    title: bookmark.title,
+                                    category: bookmark.category,
+                                    rating: bookmark.rating,
+                                    price: bookmark.price,
+                                    distance: bookmark.distance,
+                                    latitude: bookmark.latitude,
+                                    longitude: bookmark.longitude,
+                                  );
+                                  
+                                  ref.read(exploreProvider.notifier).setCustomPlaces([place]);
+                                  
+                                  Navigator.pop(context);
+                                },
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  IconData _getCategoryIcon(String category) {
+    switch (category) {
+      case 'Hotels':
+        return Icons.hotel;
+      case 'Dining':
+        return Icons.restaurant;
+      case 'Sights':
+        return Icons.photo_camera;
+      case 'Transit':
+        return Icons.directions_bus;
+      default:
+        return Icons.place;
+    }
   }
 }

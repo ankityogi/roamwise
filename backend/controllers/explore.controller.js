@@ -22,8 +22,10 @@ JSON Structure Schema:
     "title": "Name of the place",
     "category": "Hotels" | "Dining" | "Sights" | "Transit",
     "rating": 4.8,
-    "price": "$$" | "$$$" | "$$$$" | "$",
-    "distance": "0.5 km"
+    "price": "1500" | "300" | "2000" | "100",
+    "distance": "0.5 km",
+    "latitude": 21.1702,
+    "longitude": 72.8311
   }
 ]`;
 

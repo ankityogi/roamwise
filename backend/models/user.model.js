@@ -32,6 +32,12 @@ const userSchema = new mongoose.Schema({
     countriesCount: { type: Number, default: 0 },
     savedItemsCount: { type: Number, default: 0 },
   },
+  emergencyContacts: [
+    {
+      name: { type: String, trim: true },
+      phone: { type: String, trim: true },
+    }
+  ],
   createdAt: {
     type: Date,
     default: Date.now,

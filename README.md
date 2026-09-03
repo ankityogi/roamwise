@@ -220,15 +220,276 @@ cd RoamWise
   }
   ```
 
+#### 4. Update Emergency Contacts
+* **URL**: `/api/auth/emergency-contacts`
+* **Method**: `PUT`
+* **Auth Required**: Yes (Bearer Token in Authorization Header)
+* **Headers**: `Authorization: Bearer <your_jwt_token>`
+* **Request Body**:
+  ```json
+  {
+    "contacts": [
+      {
+        "name": "John Doe",
+        "phone": "+1234567890"
+      }
+    ]
+  }
+  ```
+* **Success Response (Code 200)**:
+  ```json
+  {
+    "_id": "60d0fe4f5311236168a109ca",
+    "name": "Jane Doe",
+    "email": "jane@example.com",
+    "profilePic": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde...",
+    "travelStats": {
+      "tripsCount": 2,
+      "countriesCount": 4,
+      "savedItemsCount": 15
+    },
+    "emergencyContacts": [
+      {
+        "name": "John Doe",
+        "phone": "+1234567890",
+        "_id": "60d10eef5311236168a109cb"
+      }
+    ]
+  }
+  ```
+
+### Trip & Itinerary Endpoints
+
+#### 1. Generate Travel Itinerary
+* **URL**: `/api/trips/generate`
+* **Method**: `POST`
+* **Auth Required**: Yes (Bearer Token in Authorization Header)
+* **Headers**: `Authorization: Bearer <your_jwt_token>`
+* **Request Body**:
+  ```json
+  {
+    "destination": "Kyoto, Japan",
+    "daysCount": 3,
+    "travelStyle": "Cultural"
+  }
+  ```
+* **Success Response (Code 201)**:
+  ```json
+  {
+    "_id": "60d11fcf5311236168a109cc",
+    "userId": "60d0fe4f5311236168a109ca",
+    "title": "Kyoto, Japan Exploration",
+    "destination": "Kyoto, Japan",
+    "daysCount": 3,
+    "travelStyle": "Cultural",
+    "dates": "TBD (Planned)",
+    "itinerarySchedule": [
+      {
+        "dayNumber": 1,
+        "events": [
+          {
+            "time": "09:00 AM",
+            "title": "Check-in & Rest",
+            "description": "Check in to accommodation and settle down."
+          },
+          {
+            "time": "02:00 PM",
+            "title": "Kinkaku-ji (Golden Pavilion) Visit",
+            "description": "Explore the famous Zen Buddhist temple covered in gold leaf."
+          }
+        ],
+        "_id": "60d11fcf5311236168a109cd"
+      }
+    ],
+    "createdAt": "2026-08-20T14:20:00.000Z"
+  }
+  ```
+
+#### 2. Fetch User Itineraries
+* **URL**: `/api/trips`
+* **Method**: `GET`
+* **Auth Required**: Yes (Bearer Token in Authorization Header)
+* **Headers**: `Authorization: Bearer <your_jwt_token>`
+* **Success Response (Code 200)**:
+  ```json
+  [
+    {
+      "_id": "60d11fcf5311236168a109cc",
+      "userId": "60d0fe4f5311236168a109ca",
+      "title": "Kyoto, Japan Exploration",
+      "destination": "Kyoto, Japan",
+      "daysCount": 3,
+      "travelStyle": "Cultural",
+      "dates": "TBD (Planned)",
+      "itinerarySchedule": [],
+      "createdAt": "2026-08-20T14:20:00.000Z"
+    }
+  ]
+  ```
+
+#### 3. Delete Saved Itinerary
+* **URL**: `/api/trips/:id`
+* **Method**: `DELETE`
+* **Auth Required**: Yes (Bearer Token in Authorization Header)
+* **Headers**: `Authorization: Bearer <your_jwt_token>`
+* **Success Response (Code 200)**:
+  ```json
+  {
+    "message": "Trip successfully deleted."
+  }
+  ```
+
+### Explore Endpoints
+
+#### 1. Get Local Explore Recommendations
+* **URL**: `/api/explore/places`
+* **Method**: `GET`
+* **Auth Required**: Yes (Bearer Token in Authorization Header)
+* **Headers**: `Authorization: Bearer <your_jwt_token>`
+* **Query Parameters**:
+  - `city` (Optional, defaults to `'Surat, India'`)
+  - `category` (Optional, defaults to `'All'`. Choices: `'Hotels'`, `'Dining'`, `'Sights'`, `'Transit'`, `'All'`)
+* **Success Response (Code 200)**:
+  ```json
+  [
+    {
+      "title": "The Gateway Hotel",
+      "category": "Hotels",
+      "rating": 4.5,
+      "price": "5000",
+      "distance": "1.2 km",
+      "latitude": 21.1702,
+      "longitude": 72.8311
+    }
+  ]
+  ```
+
+### Bookmark Endpoints
+
+#### 1. Add Bookmark
+* **URL**: `/api/bookmarks`
+* **Method**: `POST`
+* **Auth Required**: Yes (Bearer Token in Authorization Header)
+* **Headers**: `Authorization: Bearer <your_jwt_token>`
+* **Request Body**:
+  ```json
+  {
+    "title": "The Gateway Hotel",
+    "category": "Hotels",
+    "rating": 4.5,
+    "price": "$$$",
+    "distance": "1.2 km",
+    "latitude": 21.1702,
+    "longitude": 72.8311
+  }
+  ```
+* **Success Response (Code 201)**:
+  ```json
+  {
+    "_id": "60d12eef5311236168a109ce",
+    "userId": "60d0fe4f5311236168a109ca",
+    "title": "The Gateway Hotel",
+    "category": "Hotels",
+    "rating": 4.5,
+    "price": "$$$",
+    "distance": "1.2 km",
+    "latitude": 21.1702,
+    "longitude": 72.8311,
+    "createdAt": "2026-08-20T14:30:00.000Z"
+  }
+  ```
+
+#### 2. Get Saved Bookmarks
+* **URL**: `/api/bookmarks`
+* **Method**: `GET`
+* **Auth Required**: Yes (Bearer Token in Authorization Header)
+* **Headers**: `Authorization: Bearer <your_jwt_token>`
+* **Success Response (Code 200)**:
+  ```json
+  [
+    {
+      "_id": "60d12eef5311236168a109ce",
+      "userId": "60d0fe4f5311236168a109ca",
+      "title": "The Gateway Hotel",
+      "category": "Hotels",
+      "rating": 4.5,
+      "price": "$$$",
+      "distance": "1.2 km",
+      "latitude": 21.1702,
+      "longitude": 72.8311,
+      "createdAt": "2026-08-20T14:30:00.000Z"
+    }
+  ]
+  ```
+
+#### 3. Delete Saved Bookmark
+* **URL**: `/api/bookmarks/:id`
+* **Method**: `DELETE`
+* **Auth Required**: Yes (Bearer Token in Authorization Header)
+* **Headers**: `Authorization: Bearer <your_jwt_token>`
+* **Success Response (Code 200)**:
+  ```json
+  {
+    "message": "Bookmark removed successfully."
+  }
+  ```
+
+### Chat Endpoints
+
+#### 1. Post Chat Message
+* **URL**: `/api/chat`
+* **Method**: `POST`
+* **Auth Required**: Yes (Bearer Token in Authorization Header)
+* **Headers**: `Authorization: Bearer <your_jwt_token>`
+* **Request Body**:
+  ```json
+  {
+    "message": "What should I eat in Kyoto?",
+    "targetLanguage": "JA",
+    "history": [
+      {
+        "text": "Hi, I need help with Kyoto travel.",
+        "isMe": true
+      },
+      {
+        "text": "Hi there! I would love to help you with Kyoto.",
+        "isMe": false
+      }
+    ]
+  }
+  ```
+* **Success Response (Code 200)**:
+  ```json
+  {
+    "response": "You should definitely try Kaiseki ryori, Kyoto-style ramen, and Matcha sweets!"
+  }
+  ```
+
 ---
 
 ## 💾 Database Schemas
 
 ### User Schema (`User`)
-Represents registered traveler profiles. Contains core identity values, a profile picture URI, and numerical statistics showing aggregate trip, country, and saved item counts.
+Represents registered traveler profiles. Contains core identity values, a profile picture URI, travel statistic counters, and an emergency contacts list.
+- **name** (String, required)
+- **email** (String, required, unique)
+- **password** (String, required)
+- **profilePic** (String)
+- **travelStats**:
+  - `tripsCount` (Number, default: 0)
+  - `countriesCount` (Number, default: 0)
+  - `savedItemsCount` (Number, default: 0)
+- **emergencyContacts**: Array of `{ name: String, phone: String }`
+- **createdAt** (Date)
 
 ### Trip Schema (`Trip`)
 Represents an itinerary generated for a traveler. 
-- Contains a reference linking back to the user ID.
+- Contains a reference linking back to the user ID (`userId`).
 - Includes high-level trip settings like Destination, Duration (Days count), and Travel Style.
 - Nested timeline items store scheduled activities day-by-day (e.g., title, description, time-blocks).
+
+### Bookmark Schema (`Bookmark`)
+Represents a favorited point of interest saved by a user.
+- Contains a reference linking back to the user ID (`userId`).
+- Includes details such as Title, Category (enum: `'Hotels'`, `'Dining'`, `'Sights'`, `'Transit'`), Rating, Price level, and calculated Distance from user.
+- Persists geographic Coordinates (Latitude, Longitude) for map plotting.

@@ -117,3 +117,42 @@ exports.getUserProfile = async (req, res) => {
     res.status(500).json({ message: 'Server error retrieving user profile.' });
   }
 };
+
+/**
+ * Update User Emergency Contacts list
+ * ROUTE: PUT /api/auth/emergency-contacts
+ * Requires JWT token verification middleware
+ */
+exports.updateEmergencyContacts = async (req, res) => {
+  try {
+    const { contacts } = req.body; // Expects an array: [{ name, phone }]
+
+    if (!Array.isArray(contacts)) {
+      return res.status(400).json({ message: 'Contacts payload must be an array.' });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
+    user.emergencyContacts = contacts.map(c => ({
+      name: c.name || '',
+      phone: c.phone || '',
+    }));
+
+    await user.save();
+
+    res.status(200).json({
+      _id: user.id,
+      name: user.name,
+      email: user.email,
+      profilePic: user.profilePic,
+      travelStats: user.travelStats,
+      emergencyContacts: user.emergencyContacts,
+    });
+  } catch (error) {
+    console.error(`Update Emergency Contacts Error: ${error.message}`);
+    res.status(500).json({ message: 'Server error updating emergency contacts.', error: error.message });
+  }
+};

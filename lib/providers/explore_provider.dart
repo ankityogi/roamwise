@@ -10,6 +10,8 @@ class PlaceModel {
   final double rating;
   final String price;
   final String distance;
+  final double? latitude;
+  final double? longitude;
 
   PlaceModel({
     required this.title,
@@ -17,6 +19,8 @@ class PlaceModel {
     required this.rating,
     required this.price,
     required this.distance,
+    this.latitude,
+    this.longitude,
   });
 
   factory PlaceModel.fromJson(Map<String, dynamic> json) {
@@ -26,6 +30,8 @@ class PlaceModel {
       rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
       price: json['price'] ?? '',
       distance: json['distance'] ?? '',
+      latitude: (json['latitude'] as num?)?.toDouble(),
+      longitude: (json['longitude'] as num?)?.toDouble(),
     );
   }
 }
@@ -48,7 +54,7 @@ class ExploreState {
   factory ExploreState.initial() => ExploreState(
         places: [],
         isLoading: false,
-        searchCity: 'Paris, France',
+        searchCity: 'Surat, India',
         selectedCategory: 'All',
       );
 
@@ -117,6 +123,10 @@ class ExploreNotifier extends StateNotifier<ExploreState> {
     } catch (e) {
       state = state.copyWith(isLoading: false, errorMessage: e.toString());
     }
+  }
+
+  void setCustomPlaces(List<PlaceModel> customPlaces) {
+    state = state.copyWith(places: customPlaces);
   }
 }
 

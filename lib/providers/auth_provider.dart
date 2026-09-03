@@ -131,6 +131,37 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  /// Update the current user's emergency contacts list on the backend
+  Future<void> updateEmergencyContacts(List<EmergencyContactModel> contacts) async {
+    state = state.copyWith(status: AuthStatus.loading);
+    try {
+      final token = await _storage.read(key: 'token');
+      if (token == null) {
+        throw Exception('Session token is missing.');
+      }
+
+      final response = await _dio.put(
+        '${AppConfig.baseUrl}/auth/emergency-contacts',
+        data: {
+          'contacts': contacts.map((c) => c.toJson()).toList(),
+        },
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+
+      final updatedUser = UserModel.fromJson(response.data);
+      state = AuthState(status: AuthStatus.authenticated, user: updatedUser);
+    } on DioException catch (e) {
+      final errorMsg = e.response?.data['message'] ?? 'Failed to update emergency contacts.';
+      state = state.copyWith(status: AuthStatus.authenticated, errorMessage: errorMsg);
+    } catch (e) {
+      state = state.copyWith(status: AuthStatus.authenticated, errorMessage: e.toString());
+    }
+  }
+
   /// Log out user, removing local cached tokens
   Future<void> logout() async {
     state = state.copyWith(status: AuthStatus.loading);

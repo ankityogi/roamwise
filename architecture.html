@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RoamWise — System Architecture</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0D0E12;
+      --surface: #171821;
+      --surface-2: #1E1F2B;
+      --primary: #8A2BE2;
+      --accent: #00F0FF;
+      --success: #39FF14;
+      --warning: #FFD93D;
+      --danger: #FF6B6B;
+      --border: #2C2E3E;
+      --text: #EAEAEA;
+      --text-secondary: #8B8FA3;
+      --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Header ── */
+    .header {
+      text-align: center;
+      padding: 48px 24px 32px;
+      position: relative;
+    }
+    .header::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 3px;
+      background: linear-gradient(90deg, var(--primary), var(--accent));
+      border-radius: 4px;
+    }
+    .header h1 {
+      font-size: 2.4rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -0.5px;
+    }
+    .header p {
+      margin-top: 10px;
+      color: var(--text-secondary);
+      font-size: 1rem;
+      font-weight: 300;
+    }
+    .badge-row {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 18px;
+      flex-wrap: wrap;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 500;
+      border: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .badge .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    /* ── Sections ── */
+    .container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
+
+    .section {
+      margin-bottom: 48px;
+    }
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .section-title .icon {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    /* ── Diagram Card ── */
+    .diagram-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px;
+      box-shadow: var(--card-shadow);
+      overflow-x: auto;
+    }
+    .diagram-card .mermaid {
+      display: flex;
+      justify-content: center;
+    }
+
+    /* ── 3-Tier Visual ── */
+    .tier-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 900px) { .tier-grid { grid-template-columns: 1fr; } }
+
+    .tier-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px 24px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: var(--card-shadow);
+    }
+    .tier-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 4px;
+      border-radius: 16px 16px 0 0;
+    }
+    .tier-card.client::before { background: linear-gradient(90deg, var(--primary), #b44dff); }
+    .tier-card.server::before { background: linear-gradient(90deg, var(--accent), #00b8cc); }
+    .tier-card.external::before { background: linear-gradient(90deg, var(--success), #2ecc71); }
+
+    .tier-card .tier-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    .tier-card .tier-emoji { font-size: 1.6rem; }
+    .tier-card .tier-label h3 { font-size: 1.05rem; font-weight: 700; }
+    .tier-card .tier-label span { font-size: 0.75rem; color: var(--text-secondary); font-weight: 400; }
+
+    .layer-list { list-style: none; }
+    .layer-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 12px;
+      margin-bottom: 6px;
+      border-radius: 10px;
+      background: var(--surface-2);
+      border: 1px solid transparent;
+      transition: border-color 0.2s;
+    }
+    .layer-list li:hover { border-color: var(--border); }
+    .layer-list li .layer-icon {
+      font-size: 1rem;
+      width: 28px; height: 28px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 6px;
+      flex-shrink: 0;
+      font-size: 0.85rem;
+    }
+    .layer-list li .layer-info h4 { font-size: 0.85rem; font-weight: 600; }
+    .layer-list li .layer-info p { font-size: 0.72rem; color: var(--text-secondary); margin-top: 2px; }
+
+    /* ── Arrow connectors ── */
+    .flow-arrows {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 8px 0;
+    }
+    .flow-arrows .arrow-line {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-secondary);
+      font-size: 0.78rem;
+      font-weight: 500;
+    }
+    .flow-arrows .arrow-line .line {
+      width: 60px; height: 2px;
+      background: linear-gradient(90deg, var(--primary), var(--accent));
+      border-radius: 2px;
+    }
+
+    /* ── Endpoint Table ── */
+    .endpoint-table-wrapper {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: var(--card-shadow);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+    }
+    thead { background: var(--surface-2); }
+    th {
+      text-align: left;
+      padding: 14px 16px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      font-size: 0.72rem;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border);
+    }
+    td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(138, 43, 226, 0.04); }
+    .method-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 6px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .method-badge.get { background: rgba(0, 240, 255, 0.12); color: var(--accent); }
+    .method-badge.post { background: rgba(138, 43, 226, 0.15); color: var(--primary); }
+    .method-badge.put { background: rgba(255, 217, 61, 0.15); color: var(--warning); }
+    .method-badge.delete { background: rgba(255, 107, 107, 0.15); color: var(--danger); }
+    .auth-icon { font-size: 0.9rem; }
+    code {
+      background: var(--surface-2);
+      padding: 3px 8px;
+      border-radius: 5px;
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 0.75rem;
+      color: var(--accent);
+    }
+
+    /* ── Tech Stack Grid ── */
+    .stack-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 12px;
+    }
+    .stack-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+      box-shadow: var(--card-shadow);
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .stack-item:hover {
+      transform: translateY(-3px);
+      border-color: var(--primary);
+    }
+    .stack-item .stack-emoji { font-size: 1.5rem; margin-bottom: 8px; }
+    .stack-item h4 { font-size: 0.85rem; font-weight: 600; }
+    .stack-item p { font-size: 0.7rem; color: var(--text-secondary); margin-top: 4px; }
+
+    /* ── Decision Table ── */
+    .decision-table td:first-child {
+      font-weight: 600;
+      color: var(--accent);
+      white-space: nowrap;
+    }
+
+    /* ── Footer ── */
+    .footer {
+      text-align: center;
+      padding: 40px 20px 32px;
+      color: var(--text-secondary);
+      font-size: 0.8rem;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .header h1 { font-size: 1.8rem; }
+      .tier-grid { grid-template-columns: 1fr; }
+      .diagram-card { padding: 16px; }
+      table { font-size: 0.75rem; }
+      th, td { padding: 10px 12px; }
+      .stack-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ═══════════ HEADER ═══════════ -->
+  <div class="header">
+    <h1>🗺️ RoamWise — System Architecture</h1>
+    <p>AI-Powered Smart Travel Companion</p>
+    <div class="badge-row">
+      <span class="badge"><span class="dot" style="background:var(--primary)"></span> MVVM Frontend</span>
+      <span class="badge"><span class="dot" style="background:var(--accent)"></span> MVC Backend</span>
+      <span class="badge"><span class="dot" style="background:var(--success)"></span> RESTful API</span>
+      <span class="badge"><span class="dot" style="background:var(--warning)"></span> JWT Auth</span>
+      <span class="badge"><span class="dot" style="background:var(--danger)"></span> Gemini AI</span>
+    </div>
+  </div>
+
+  <div class="container">
+
+    <!-- ═══════════ 1. HIGH-LEVEL 3-TIER ═══════════ -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon" style="background:rgba(138,43,226,0.15); color:var(--primary)">🏗️</span>
+        High-Level System Architecture
+      </div>
+
+      <div class="tier-grid">
+        <!-- CLIENT -->
+        <div class="tier-card client">
+          <div class="tier-header">
+            <span class="tier-emoji">📱</span>
+            <div class="tier-label">
+              <h3>Client Tier</h3>
+              <span>Flutter · Dart SDK ^3.12.2</span>
+            </div>
+          </div>
+          <ul class="layer-list">
+            <li>
+              <span class="layer-icon" style="background:rgba(138,43,226,0.15); color:var(--primary)">🖥️</span>
+              <div class="layer-info">
+                <h4>Presentation Layer</h4>
+                <p>8 Screens — Splash, Auth, Dashboard, Explore, Chat, Planner, Profile, Home Shell</p>
+              </div>
+            </li>
+            <li>
+              <span class="layer-icon" style="background:rgba(0,240,255,0.12); color:var(--accent)">⚙️</span>
+              <div class="layer-info">
+                <h4>State Management</h4>
+                <p>8 Riverpod Providers — Auth, Trip, Explore, Chat, Bookmark, Location, Speech, Navigation</p>
+              </div>
+            </li>
+            <li>
+              <span class="layer-icon" style="background:rgba(57,255,20,0.12); color:var(--success)">📦</span>
+              <div class="layer-info">
+                <h4>Data Models</h4>
+                <p>UserModel, TripModel, EmergencyContactModel, DaySchedule, EventItem</p>
+              </div>
+            </li>
+            <li>
+              <span class="layer-icon" style="background:rgba(255,217,61,0.12); color:var(--warning)">🌐</span>
+              <div class="layer-info">
+                <h4>Network Layer</h4>
+                <p>Dio HTTP Client → Platform-aware base URL routing</p>
+              </div>
+            </li>
+            <li>
+              <span class="layer-icon" style="background:rgba(255,107,107,0.12); color:var(--danger)">💾</span>
+              <div class="layer-info">
+                <h4>Local Storage</h4>
+                <p>FlutterSecureStorage (JWT) + SharedPreferences (cache)</p>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <!-- SERVER -->
+        <div class="tier-card server">
+          <div class="tier-header">
+            <span class="tier-emoji">🖧</span>
+            <div class="tier-label">
+              <h3>Server Tier</h3>
+              <span>Node.js v18+ · Express.js</span>
+            </div>
+          </div>
+          <ul class="layer-list">
+            <li>
+              <span class="layer-icon" style="background:rgba(255,107,107,0.12); color:var(--danger)">🛡️</span>
+              <div class="layer-info">
+                <h4>Middleware Layer</h4>
+                <p>CORS · JSON Parser · JWT Auth Guard (Bearer Token Verification)</p>
+              </div>
+            </li>
+            <li>
+              <span class="layer-icon" style="background:rgba(0,240,255,0.12); color:var(--accent)">🔀</span>
+              <div class="layer-info">
+                <h4>Route Layer</h4>
+                <p>5 Express Routers — auth, trips, chat, explore, bookmarks</p>
+              </div>
+            </li>
+            <li>
+              <span class="layer-icon" style="background:rgba(138,43,226,0.15); color:var(--primary)">🎯</span>
+              <div class="layer-info">
+                <h4>Controller Layer</h4>
+                <p>5 Controllers — Auth, Trip, Chat, Explore, Bookmark (business logic)</p>
+              </div>
+            </li>
+            <li>
+              <span class="layer-icon" style="background:rgba(57,255,20,0.12); color:var(--success)">📋</span>
+              <div class="layer-info">
+                <h4>Model Layer</h4>
+                <p>3 Mongoose Schemas — User (bcrypt), Trip (nested events), Bookmark (geo)</p>
+              </div>
+            </li>
+            <li>
+              <span class="layer-icon" style="background:rgba(255,217,61,0.12); color:var(--warning)">⚙️</span>
+              <div class="layer-info">
+                <h4>Config Layer</h4>
+                <p>DB Connection (MongoDB Atlas) + Gemini AI Client (retry + backoff)</p>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <!-- EXTERNAL -->
+        <div class="tier-card external">
+          <div class="tier-header">
+            <span class="tier-emoji">☁️</span>
+            <div class="tier-label">
+              <h3>External Services</h3>
+              <span>Cloud APIs &amp; Infrastructure</span>
+            </div>
+          </div>
+          <ul class="layer-list">
+            <li>
+              <span class="layer-icon" style="background:rgba(57,255,20,0.12); color:var(--success)">🍃</span>
+              <div class="layer-info">
+                <h4>MongoDB Atlas</h4>
+                <p>Cloud-hosted document database — Users, Trips, Bookmarks collections</p>
+              </div>
+            </li>
+            <li>
+              <span class="layer-icon" style="background:rgba(138,43,226,0.15); color:var(--primary)">🤖</span>
+              <div class="layer-info">
+                <h4>Google Gemini API</h4>
+                <p>Generative AI — Itinerary generation, Chat assistant, Explore recommendations</p>
+              </div>
+            </li>
+            <li>
+              <span class="layer-icon" style="background:rgba(0,240,255,0.12); color:var(--accent)">☁️</span>
+              <div class="layer-info">
+                <h4>Cloudinary</h4>
+                <p>Media CDN — Profile pictures and itinerary asset storage</p>
+              </div>
+            </li>
+            <li>
+              <span class="layer-icon" style="background:rgba(255,217,61,0.12); color:var(--warning)">🗺️</span>
+              <div class="layer-info">
+                <h4>Google Maps Platform</h4>
+                <p>Maps SDK + Geocoding + Geolocator — Interactive maps &amp; location services</p>
+              </div>
+            </li>
+            <li>
+              <span class="layer-icon" style="background:rgba(255,107,107,0.12); color:var(--danger)">🎤</span>
+              <div class="layer-info">
+                <h4>Speech-to-Text</h4>
+                <p>On-device voice recognition for real-time translation input</p>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Data Flow Arrow -->
+      <div class="flow-arrows" style="margin-top:20px">
+        <div class="arrow-line">
+          <span style="color:var(--primary)">📱 Flutter</span>
+          <span class="line"></span>
+          <span style="font-size:0.7rem; color:var(--text-secondary)">REST / JSON / JWT</span>
+          <span class="line"></span>
+          <span style="color:var(--accent)">🖧 Express</span>
+          <span class="line"></span>
+          <span style="font-size:0.7rem; color:var(--text-secondary)">Mongoose / HTTP</span>
+          <span class="line"></span>
+          <span style="color:var(--success)">☁️ Services</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════ 2. FRONTEND MVVM DIAGRAM ═══════════ -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon" style="background:rgba(138,43,226,0.15); color:var(--primary)">📱</span>
+        Frontend Architecture — MVVM + Riverpod
+      </div>
+      <div class="diagram-card">
+        <pre class="mermaid">
+graph LR
+    subgraph ENTRY["🚀 App Entry"]
+        MAIN["main.dart\nProviderScope → MaterialApp"]
+    end
+
+    subgraph NAV["🧭 Navigation Layer"]
+        ROUTES["AppRoutes\nsplash · auth · home"]
+        SPLASH["SplashScreen\nAuto-auth check"]
+        AUTH["AuthScreen\nLogin / Register"]
+        HOME["HomeScreen\nBottomNavigationBar"]
+    end
+
+    subgraph TABS["📑 View Layer — Tab Screens"]
+        DASH["DashboardTab\nQuick Actions\nActive Trip Tracker\nRecommendations"]
+        EXPLORE["ExploreTab\nGPS Map Preview\nCategory Filters\nPlace Cards"]
+        CHAT["ChatTab\nAI Chatbot\nTranslation Selector\nVoice Input"]
+        PLANNER["PlannerTab\nTrip Generator\nDay-by-Day Timeline"]
+        PROFILE["ProfileTab\nTravel Stats\nEmergency Contacts\nSettings"]
+    end
+
+    subgraph PROVIDERS["⚙️ ViewModel Layer — Riverpod StateNotifiers"]
+        AP["authProvider\nAuthNotifier\nlogin · register · logout\ncheckAuthStatus"]
+        TP["tripProvider\nTripNotifier\ngenerate · fetch · delete"]
+        EP["exploreProvider\nExploreNotifier\nfetchPlaces"]
+        CP["chatProvider\nChatNotifier\nsendMessage"]
+        BP["bookmarkProvider\nBookmarkNotifier\nadd · fetch · delete"]
+        LP["locationProvider\nLocationNotifier\ngetCurrentPosition"]
+        SP["speechProvider\nSpeechNotifier\nstartListening"]
+        NP["activeTabProvider\nStateProvider‹int›"]
+    end
+
+    subgraph MODELS["📦 Model Layer"]
+        UM["UserModel\nname · email · profilePic\ntravelStats\nemergencyContacts"]
+        TM["TripModel\ndestination · daysCount\ntravelStyle\nitinerarySchedule"]
+    end
+
+    subgraph UTILS["🔧 Utilities"]
+        CONFIG["AppConfig\nPlatform-aware baseUrl\n10.0.2.2 / localhost"]
+        THEME["AppTheme\nDark Theme\nAppColors"]
+    end
+
+    MAIN --> ROUTES
+    ROUTES --> SPLASH
+    SPLASH -->|Token found| HOME
+    SPLASH -->|No token| AUTH
+    AUTH -->|Login success| HOME
+    HOME --> DASH & EXPLORE & CHAT & PLANNER & PROFILE
+
+    DASH --> AP & TP & BP
+    EXPLORE --> EP & LP
+    CHAT --> CP & SP
+    PLANNER --> TP
+    PROFILE --> AP
+
+    AP --> UM
+    TP --> TM
+    AP & TP & EP & CP & BP --> CONFIG
+
+    style ENTRY fill:#0D0E12,stroke:#8A2BE2,stroke-width:2px,color:#fff
+    style NAV fill:#171821,stroke:#2C2E3E,stroke-width:2px,color:#fff
+    style TABS fill:#171821,stroke:#8A2BE2,stroke-width:2px,color:#fff
+    style PROVIDERS fill:#171821,stroke:#00F0FF,stroke-width:2px,color:#fff
+    style MODELS fill:#171821,stroke:#39FF14,stroke-width:2px,color:#fff
+    style UTILS fill:#171821,stroke:#2C2E3E,stroke-width:2px,color:#fff
+        </pre>
+      </div>
+    </div>
+
+    <!-- ═══════════ 3. BACKEND MVC DIAGRAM ═══════════ -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon" style="background:rgba(0,240,255,0.12); color:var(--accent)">🖧</span>
+        Backend Architecture — MVC + Express
+      </div>
+      <div class="diagram-card">
+        <pre class="mermaid">
+graph TB
+    subgraph ENTRY_S["🚀 Server Entry — server.js"]
+        SJ["Express App\nCORS · JSON Parser\nRoute Registration\nHealth Check /api/health"]
+    end
+
+    subgraph MW["🛡️ Middleware"]
+        AUTH_MW["auth.middleware.js\nJWT Verification\nBearer Token Extraction\nUser Hydration via MongoDB\nreq.user Injection"]
+    end
+
+    subgraph ROUTES_S["🔀 Route Layer — Express Routers"]
+        AR["/api/auth\nauth.routes.js\nPOST /register\nPOST /login\nGET /profile\nPUT /emergency-contacts"]
+        TR["/api/trips\ntrip.routes.js\nPOST /generate\nGET /\nDELETE /:id"]
+        CR["/api/chat\nchat.routes.js\nPOST /"]
+        ER["/api/explore\nexplore.routes.js\nGET /places"]
+        BR["/api/bookmarks\nbookmark.routes.js\nPOST /\nGET /\nDELETE /:id"]
+    end
+
+    subgraph CTRL["🎯 Controller Layer — Business Logic"]
+        AC["auth.controller.js\nregister — bcrypt hash + JWT sign\nlogin — credential verify\ngetProfile — token decode\nupdateEmergencyContacts"]
+        TC["trip.controller.js\ngenerateItinerary — Gemini prompt\ngetTrips — MongoDB query\ndeleteTrip — cascade stats"]
+        CC["chat.controller.js\nchatResponse — Gemini chat session\nhistory formatting\nlanguage directives JA/ES/FR"]
+        EC["explore.controller.js\ngetExplorePlaces\nGemini local expert prompt\nJSON parsing + fallback"]
+        BC["bookmark.controller.js\naddBookmark\ngetBookmarks\ndeleteBookmark\nstats counter sync"]
+    end
+
+    subgraph MDL["📋 Model Layer — Mongoose Schemas"]
+        UM_S["User\nname · email\npassword — bcrypt hashed\nprofilePic · travelStats\nemergencyContacts[]"]
+        TM_S["Trip\nuserId — ObjectId ref\ntitle · destination\ndaysCount · travelStyle\nitinerarySchedule[]\ncreatedAt"]
+        BM_S["Bookmark\nuserId — ObjectId ref\ntitle · category enum\nrating · price · distance\nlatitude · longitude\ncreatedAt"]
+    end
+
+    subgraph CFG["⚙️ Configuration"]
+        DB["db.js\nMongoose Connection\nMongoDB Atlas URI\nserverSelectionTimeoutMS"]
+        GEM["gemini.js\nGoogleGenerativeAI Client\ngetGeminiModel()\ngenerateContentWithRetry()\nsendMessageWithRetry()\nExponential Backoff"]
+    end
+
+    SJ --> AR & TR & CR & ER & BR
+    SJ --> DB
+
+    AR --> AC
+    TR --> AUTH_MW --> TC
+    CR --> AUTH_MW --> CC
+    ER --> AUTH_MW --> EC
+    BR --> AUTH_MW --> BC
+
+    AC --> UM_S
+    TC --> TM_S & UM_S & GEM
+    CC --> GEM
+    EC --> GEM
+    BC --> BM_S & UM_S
+
+    style ENTRY_S fill:#0f3460,stroke:#00F0FF,stroke-width:2px,color:#fff
+    style MW fill:#16213e,stroke:#FF6B6B,stroke-width:2px,color:#fff
+    style ROUTES_S fill:#16213e,stroke:#00F0FF,stroke-width:2px,color:#fff
+    style CTRL fill:#16213e,stroke:#8A2BE2,stroke-width:2px,color:#fff
+    style MDL fill:#16213e,stroke:#39FF14,stroke-width:2px,color:#fff
+    style CFG fill:#16213e,stroke:#FFD93D,stroke-width:2px,color:#fff
+        </pre>
+      </div>
+    </div>
+
+    <!-- ═══════════ 4. AUTH FLOW ═══════════ -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon" style="background:rgba(255,107,107,0.12); color:var(--danger)">🔐</span>
+        Authentication Flow — JWT Lifecycle
+      </div>
+      <div class="diagram-card">
+        <pre class="mermaid">
+sequenceDiagram
+    participant U as 📱 Flutter App
+    participant S as 🔒 SecureStorage
+    participant A as 🖧 /api/auth
+    participant MW as 🛡️ JWT Middleware
+    participant DB as 🍃 MongoDB
+
+    Note over U,DB: 1️⃣ Registration / Login
+    U->>A: POST /register or /login {name, email, password}
+    A->>DB: Create user (bcrypt hash) or Verify credentials
+    DB-->>A: User document
+    A->>A: jwt.sign({id}, secret, {expiresIn: 30d})
+    A-->>U: {user, token}
+    U->>S: SecureStorage.write('token', jwt)
+
+    Note over U,DB: 2️⃣ Authenticated API Request
+    U->>S: SecureStorage.read('token')
+    S-->>U: Bearer token
+    U->>MW: GET /api/trips — Authorization: Bearer token
+    MW->>MW: jwt.verify(token, secret)
+    MW->>DB: User.findById(decoded.id).select('-password')
+    DB-->>MW: User document
+    MW->>MW: req.user = user
+    MW-->>U: ✅ Proceed to controller → response
+
+    Note over U,DB: 3️⃣ Session Expiry / Invalid Token
+    U->>S: SecureStorage.read('token')
+    S-->>U: Expired token
+    U->>MW: GET /api/auth/profile
+    MW->>MW: jwt.verify() ❌ FAILS
+    MW-->>U: 401 Unauthorized
+    U->>S: SecureStorage.delete('token')
+    U->>U: Navigator → AuthScreen
+        </pre>
+      </div>
+    </div>
+
+    <!-- ═══════════ 5. AI INTEGRATION ═══════════ -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon" style="background:rgba(138,43,226,0.15); color:var(--primary)">🤖</span>
+        AI Integration — Gemini Data Flow
+      </div>
+      <div class="diagram-card">
+        <pre class="mermaid">
+flowchart TB
+    subgraph ITIN["📋 Itinerary Generation"]
+        direction LR
+        I1["User Input\ndestination\ndaysCount\ntravelStyle"] --> I2["trip.controller.js\nBuild structured prompt"]
+        I2 --> I3["Gemini API\nresponseMimeType:\napplication/json"]
+        I3 --> I4["Parse JSON\nRegex fallback\nfor markdown wraps"]
+        I4 --> I5["Save Trip\nto MongoDB\n+ Increment\ntripsCount"]
+    end
+
+    subgraph CHAT_F["💬 AI Chat Assistant"]
+        direction LR
+        C1["User Message\n+ history[]\n+ targetLanguage"] --> C2["chat.controller.js\nFormat last 10 msgs\nSet language directive"]
+        C2 --> C3["Gemini Chat Session\nSystem instruction:\nTravel expert persona"]
+        C3 --> C4["Return AI\nresponse text"]
+    end
+
+    subgraph EXPLORE_F["🗺️ Explore Recommendations"]
+        direction LR
+        E1["Query Params\ncity\ncategory"] --> E2["explore.controller.js\nLocal expert prompt"]
+        E2 --> E3["Gemini API\nJSON structured\nplace data"]
+        E3 --> E4["Parse places[]\nwith geo coords\nfor map plotting"]
+    end
+
+    subgraph RETRY["🔄 Reliability Layer — gemini.js"]
+        direction LR
+        R1["Rate Limit\nDetection\n429 / ResourceExhausted"] --> R2["Exponential\nBackoff\n1s → 2s → 4s"]
+        R2 --> R3["Max 3\nRetries"]
+    end
+
+    ITIN --> RETRY
+    CHAT_F --> RETRY
+    EXPLORE_F --> RETRY
+
+    style ITIN fill:#1a1a2e,stroke:#8A2BE2,stroke-width:2px,color:#fff
+    style CHAT_F fill:#1a1a2e,stroke:#00F0FF,stroke-width:2px,color:#fff
+    style EXPLORE_F fill:#1a1a2e,stroke:#39FF14,stroke-width:2px,color:#fff
+    style RETRY fill:#16213e,stroke:#FFD93D,stroke-width:2px,color:#fff
+        </pre>
+      </div>
+    </div>
+
+    <!-- ═══════════ 6. API ENDPOINT TABLE ═══════════ -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon" style="background:rgba(0,240,255,0.12); color:var(--accent)">📡</span>
+        API Endpoint Map
+      </div>
+      <div class="endpoint-table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Module</th>
+              <th>Method</th>
+              <th>Endpoint</th>
+              <th>Auth</th>
+              <th>Controller</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td rowspan="4"><strong>Auth</strong></td>
+              <td><span class="method-badge post">POST</span></td>
+              <td><code>/api/auth/register</code></td>
+              <td><span class="auth-icon">❌</span></td>
+              <td>auth.controller.register</td>
+              <td>Register new user</td>
+            </tr>
+            <tr>
+              <td><span class="method-badge post">POST</span></td>
+              <td><code>/api/auth/login</code></td>
+              <td><span class="auth-icon">❌</span></td>
+              <td>auth.controller.login</td>
+              <td>Log in user</td>
+            </tr>
+            <tr>
+              <td><span class="method-badge get">GET</span></td>
+              <td><code>/api/auth/profile</code></td>
+              <td><span class="auth-icon">🔒</span></td>
+              <td>auth.controller.getProfile</td>
+              <td>Fetch user profile</td>
+            </tr>
+            <tr>
+              <td><span class="method-badge put">PUT</span></td>
+              <td><code>/api/auth/emergency-contacts</code></td>
+              <td><span class="auth-icon">🔒</span></td>
+              <td>auth.controller.updateEmergencyContacts</td>
+              <td>Update emergency contacts</td>
+            </tr>
+            <tr>
+              <td rowspan="3"><strong>Trips</strong></td>
+              <td><span class="method-badge post">POST</span></td>
+              <td><code>/api/trips/generate</code></td>
+              <td><span class="auth-icon">🔒</span></td>
+              <td>trip.controller.generateItinerary</td>
+              <td>AI-generate itinerary via Gemini</td>
+            </tr>
+            <tr>
+              <td><span class="method-badge get">GET</span></td>
+              <td><code>/api/trips</code></td>
+              <td><span class="auth-icon">🔒</span></td>
+              <td>trip.controller.getTrips</td>
+              <td>List all user trips</td>
+            </tr>
+            <tr>
+              <td><span class="method-badge delete">DELETE</span></td>
+              <td><code>/api/trips/:id</code></td>
+              <td><span class="auth-icon">🔒</span></td>
+              <td>trip.controller.deleteTrip</td>
+              <td>Delete a saved trip</td>
+            </tr>
+            <tr>
+              <td><strong>Chat</strong></td>
+              <td><span class="method-badge post">POST</span></td>
+              <td><code>/api/chat</code></td>
+              <td><span class="auth-icon">🔒</span></td>
+              <td>chat.controller.chatResponse</td>
+              <td>AI travel assistant chat</td>
+            </tr>
+            <tr>
+              <td><strong>Explore</strong></td>
+              <td><span class="method-badge get">GET</span></td>
+              <td><code>/api/explore/places</code></td>
+              <td><span class="auth-icon">🔒</span></td>
+              <td>explore.controller.getExplorePlaces</td>
+              <td>AI-generated place recommendations</td>
+            </tr>
+            <tr>
+              <td rowspan="3"><strong>Bookmarks</strong></td>
+              <td><span class="method-badge post">POST</span></td>
+              <td><code>/api/bookmarks</code></td>
+              <td><span class="auth-icon">🔒</span></td>
+              <td>bookmark.controller.addBookmark</td>
+              <td>Save a bookmark</td>
+            </tr>
+            <tr>
+              <td><span class="method-badge get">GET</span></td>
+              <td><code>/api/bookmarks</code></td>
+              <td><span class="auth-icon">🔒</span></td>
+              <td>bookmark.controller.getBookmarks</td>
+              <td>List saved bookmarks</td>
+            </tr>
+            <tr>
+              <td><span class="method-badge delete">DELETE</span></td>
+              <td><code>/api/bookmarks/:id</code></td>
+              <td><span class="auth-icon">🔒</span></td>
+              <td>bookmark.controller.deleteBookmark</td>
+              <td>Remove a bookmark</td>
+            </tr>
+            <tr>
+              <td><strong>Health</strong></td>
+              <td><span class="method-badge get">GET</span></td>
+              <td><code>/api/health</code></td>
+              <td><span class="auth-icon">❌</span></td>
+              <td><em>inline handler</em></td>
+              <td>Server status + DB state</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ═══════════ 7. TECH STACK ═══════════ -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon" style="background:rgba(57,255,20,0.12); color:var(--success)">🛠️</span>
+        Technology Stack
+      </div>
+      <div class="stack-grid">
+        <div class="stack-item">
+          <div class="stack-emoji">💙</div>
+          <h4>Flutter</h4>
+          <p>Dart SDK ^3.12.2</p>
+        </div>
+        <div class="stack-item">
+          <div class="stack-emoji">⚙️</div>
+          <h4>Riverpod</h4>
+          <p>State Management</p>
+        </div>
+        <div class="stack-item">
+          <div class="stack-emoji">🌐</div>
+          <h4>Dio</h4>
+          <p>HTTP Client</p>
+        </div>
+        <div class="stack-item">
+          <div class="stack-emoji">🗺️</div>
+          <h4>Google Maps</h4>
+          <p>Maps + Geocoding</p>
+        </div>
+        <div class="stack-item">
+          <div class="stack-emoji">📍</div>
+          <h4>Geolocator</h4>
+          <p>Location Services</p>
+        </div>
+        <div class="stack-item">
+          <div class="stack-emoji">🎤</div>
+          <h4>Speech to Text</h4>
+          <p>Voice Recognition</p>
+        </div>
+        <div class="stack-item">
+          <div class="stack-emoji">🔒</div>
+          <h4>Secure Storage</h4>
+          <p>Keychain / KeyStore</p>
+        </div>
+        <div class="stack-item">
+          <div class="stack-emoji">🟢</div>
+          <h4>Node.js</h4>
+          <p>Runtime v18+</p>
+        </div>
+        <div class="stack-item">
+          <div class="stack-emoji">🚂</div>
+          <h4>Express.js</h4>
+          <p>Web Framework</p>
+        </div>
+        <div class="stack-item">
+          <div class="stack-emoji">🍃</div>
+          <h4>MongoDB</h4>
+          <p>Atlas Cloud DB</p>
+        </div>
+        <div class="stack-item">
+          <div class="stack-emoji">🔗</div>
+          <h4>Mongoose</h4>
+          <p>ODM / Schema</p>
+        </div>
+        <div class="stack-item">
+          <div class="stack-emoji">🔐</div>
+          <h4>JWT</h4>
+          <p>Auth Tokens</p>
+        </div>
+        <div class="stack-item">
+          <div class="stack-emoji">🛡️</div>
+          <h4>bcryptjs</h4>
+          <p>Password Hashing</p>
+        </div>
+        <div class="stack-item">
+          <div class="stack-emoji">🤖</div>
+          <h4>Gemini AI</h4>
+          <p>Generative AI API</p>
+        </div>
+        <div class="stack-item">
+          <div class="stack-emoji">☁️</div>
+          <h4>Cloudinary</h4>
+          <p>Media CDN</p>
+        </div>
+        <div class="stack-item">
+          <div class="stack-emoji">🎨</div>
+          <h4>Google Fonts</h4>
+          <p>Outfit Typography</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════ 8. ARCHITECTURAL DECISIONS ═══════════ -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon" style="background:rgba(255,217,61,0.12); color:var(--warning)">📐</span>
+        Key Architectural Decisions
+      </div>
+      <div class="endpoint-table-wrapper">
+        <table class="decision-table">
+          <thead>
+            <tr>
+              <th>Decision</th>
+              <th>Rationale</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Riverpod over BLoC</td>
+              <td>Compile-safe dependency injection, no BuildContext dependency in business logic, testable StateNotifiers with immutable state</td>
+            </tr>
+            <tr>
+              <td>Dio over http package</td>
+              <td>Built-in interceptors, retry support, request cancellation, structured error handling via DioException</td>
+            </tr>
+            <tr>
+              <td>JWT + SecureStorage</td>
+              <td>Stateless authentication (no server sessions), tokens persisted in OS Keychain (iOS) / KeyStore (Android)</td>
+            </tr>
+            <tr>
+              <td>Gemini with retry backoff</td>
+              <td>Exponential backoff on 429 rate limits prevents cascade failures during high traffic; max 3 retries</td>
+            </tr>
+            <tr>
+              <td>Platform-aware base URL</td>
+              <td>Automatic loopback routing — 10.0.2.2 for Android emulator, localhost for iOS/desktop — zero config switching</td>
+            </tr>
+            <tr>
+              <td>MVC on backend</td>
+              <td>Clean separation: Routes define endpoints, Controllers own business logic, Models define data schema + validation</td>
+            </tr>
+            <tr>
+              <td>Mongoose ODM</td>
+              <td>Schema validation at application layer, pre-save middleware hooks (bcrypt), ref population, and compound index support</td>
+            </tr>
+            <tr>
+              <td>MVVM on frontend</td>
+              <td>Views (Screens) observe ViewModels (Providers), Models are pure data classes — enables UI-independent testing</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══════════ FOOTER ═══════════ -->
+  <div class="footer">
+    <p>RoamWise System Architecture • Built with Flutter + Node.js + MongoDB + Gemini AI</p>
+    <p style="margin-top:6px; font-size:0.7rem;">Generated for architectural documentation and review</p>
+  </div>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'dark',
+      themeVariables: {
+        darkMode: true,
+        background: '#0D0E12',
+        primaryColor: '#1a1a2e',
+        primaryBorderColor: '#8A2BE2',
+        primaryTextColor: '#EAEAEA',
+        secondaryColor: '#16213e',
+        secondaryBorderColor: '#00F0FF',
+        tertiaryColor: '#0f3460',
+        lineColor: '#8A2BE2',
+        fontFamily: 'Outfit, sans-serif',
+        fontSize: '13px',
+        nodeBorder: '#2C2E3E',
+        mainBkg: '#171821',
+        clusterBkg: '#171821',
+        clusterBorder: '#2C2E3E',
+        titleColor: '#EAEAEA',
+        edgeLabelBackground: '#171821',
+        nodeTextColor: '#EAEAEA',
+        actorTextColor: '#EAEAEA',
+        actorBkg: '#171821',
+        actorBorder: '#8A2BE2',
+        actorLineColor: '#2C2E3E',
+        signalColor: '#EAEAEA',
+        signalTextColor: '#EAEAEA',
+        noteBkgColor: '#1a1a2e',
+        noteTextColor: '#EAEAEA',
+        noteBorderColor: '#8A2BE2',
+        activationBkgColor: '#1a1a2e',
+        activationBorderColor: '#00F0FF',
+        sequenceNumberColor: '#00F0FF',
+      },
+      flowchart: {
+        useMaxWidth: true,
+        htmlLabels: true,
+        curve: 'basis',
+        padding: 16,
+        nodeSpacing: 50,
+        rankSpacing: 60,
+      },
+      sequence: {
+        useMaxWidth: true,
+        actorMargin: 80,
+        messageMargin: 40,
+        boxMargin: 10,
+        noteMargin: 10,
+        mirrorActors: false,
+        showSequenceNumbers: true,
+      },
+    });
+  </script>
+
+</body>
+</html>

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../utils/theme.dart';
 import '../providers/trip_provider.dart';
-import '../models/trip_model.dart';
 
 class PlannerTab extends ConsumerStatefulWidget {
   const PlannerTab({super.key});

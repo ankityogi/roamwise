@@ -55,3 +55,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# Android/Gradle generated files
+android/.gradle/
+android/build/
+**/build/
