@@ -43,19 +43,39 @@ exports.chatResponse = async (req, res) => {
 
     const systemInstruction = 
       "You are the RoamWise Travel Assistant, an expert, friendly AI travel companion. " +
-      "Help the traveler with plans, dining recommendations, sightseeing secrets, transit routes, and language translations. " +
+      "Your main and only purpose is to help the traveler with travel plans, dining recommendations, sightseeing secrets, transit routes, accommodations, travel safety, and language translations/travel vocabulary (in the context of travel assistance). " +
+      "CRITICAL: You must NOT answer any questions or requests that are not related to travel assistance or the main purpose of this app (such as writing code, general programming/debugging advice, solving generic math or science questions, history unrelated to travel, etc.). " +
+      "If the user asks a non-travel question, you must politely decline to answer, stating that you can only help with travel-related inquiries. " +
       "Keep responses concise (usually 2-4 sentences or bullet points) and formatting clean." +
       languageDirective;
 
-    const model = getGeminiModel(undefined, systemInstruction);
+    const candidateModels = [
+      process.env.GEMINI_MODEL || 'gemini-3.5-flash',
+      'gemini-flash-latest',
+      'gemini-3.5-flash-lite',
+      'gemini-3.1-flash-lite'
+    ];
 
-    const chatSession = model.startChat({
-      history: formattedHistory,
-    });
+    let responseText = null;
+    let lastError = null;
 
-    const result = await sendMessageWithRetry(chatSession, message);
-    const response = await result.response;
-    const responseText = response.text().trim();
+    for (const candidate of candidateModels) {
+      try {
+        const model = getGeminiModel(candidate, systemInstruction);
+        const chatSession = model.startChat({ history: formattedHistory });
+        const result = await sendMessageWithRetry(chatSession, message);
+        const response = await result.response;
+        responseText = response.text().trim();
+        if (responseText) break;
+      } catch (err) {
+        lastError = err;
+        console.warn(`Chat model ${candidate} failed: ${err.message?.slice(0, 80)}. Trying next candidate...`);
+      }
+    }
+
+    if (!responseText) {
+      throw lastError || new Error("Failed to generate response from all AI models.");
+    }
 
     res.status(200).json({ response: responseText });
   } catch (error) {

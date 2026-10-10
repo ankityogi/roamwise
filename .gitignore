@@ -59,3 +59,8 @@ yarn-error.log*
 android/.gradle/
 android/build/
 **/build/
+
+# Reports and figure generation scripts
+*.docx
+figure_*.png
+generate_*.py

@@ -13,6 +13,7 @@ class AuthScreen extends ConsumerStatefulWidget {
 class _AuthScreenState extends ConsumerState<AuthScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _isLogin = true;
+  bool _obscurePassword = true;
   String _email = '';
   String _password = '';
   String _name = '';
@@ -42,10 +43,12 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         Navigator.of(context).pushReplacementNamed('/home');
       } else if (next.status == AuthStatus.error && next.errorMessage != null) {
         // Show validation or connection errors in a SnackBar
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(next.errorMessage!),
             backgroundColor: Colors.redAccent,
+            behavior: SnackBarBehavior.floating,
           ),
         );
       }
@@ -89,8 +92,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                       ),
                     ),
                     validator: (value) =>
-                        value == null || value.isEmpty ? 'Please enter your name' : null,
-                    onSaved: (value) => _name = value ?? '',
+                        value == null || value.trim().isEmpty ? 'Please enter your name' : null,
+                    onSaved: (value) => _name = value?.trim() ?? '',
                   ),
                   const SizedBox(height: 16),
                 ],
@@ -106,15 +109,34 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                     ),
                   ),
                   keyboardType: TextInputType.emailAddress,
-                  validator: (value) =>
-                      value == null || !value.contains('@') ? 'Please enter a valid email' : null,
-                  onSaved: (value) => _email = value ?? '',
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Please enter your email';
+                    }
+                    final trimmed = value.trim();
+                    if (!trimmed.contains('@') || !trimmed.contains('.')) {
+                      return 'Please enter a valid email address';
+                    }
+                    return null;
+                  },
+                  onSaved: (value) => _email = value?.trim() ?? '',
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
                   decoration: InputDecoration(
                     labelText: 'Password',
                     prefixIcon: const Icon(Icons.lock_outline),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                        color: AppColors.textSecondary,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _obscurePassword = !_obscurePassword;
+                        });
+                      },
+                    ),
                     filled: true,
                     fillColor: AppColors.surface,
                     border: OutlineInputBorder(
@@ -122,7 +144,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                       borderSide: BorderSide.none,
                     ),
                   ),
-                  obscureText: true,
+                  obscureText: _obscurePassword,
                   validator: (value) =>
                       value == null || value.length < 6 ? 'Password must be at least 6 characters' : null,
                   onSaved: (value) => _password = value ?? '',
@@ -154,6 +176,66 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                       style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                   ),
+                const SizedBox(height: 20),
+
+                // Social Login Divider
+                Row(
+                  children: [
+                    const Expanded(child: Divider(color: AppColors.cardBorder, thickness: 1)),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Text(
+                        'OR',
+                        style: TextStyle(
+                          color: AppColors.textSecondary.withValues(alpha: 0.8),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 1,
+                        ),
+                      ),
+                    ),
+                    const Expanded(child: Divider(color: AppColors.cardBorder, thickness: 1)),
+                  ],
+                ),
+                const SizedBox(height: 20),
+
+                // Google Sign In Button
+                OutlinedButton.icon(
+                  onPressed: authState.status == AuthStatus.loading
+                      ? null
+                      : () {
+                          ref.read(authProvider.notifier).signInWithGoogle();
+                        },
+                  icon: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withValues(alpha: 0.1),
+                    ),
+                    child: const Icon(
+                      Icons.g_mobiledata_rounded,
+                      size: 28,
+                      color: AppColors.accent,
+                    ),
+                  ),
+                  label: const Text(
+                    'Continue with Google',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor: AppColors.surface,
+                    side: const BorderSide(color: AppColors.cardBorder, width: 1.2),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+
                 const SizedBox(height: 16),
                 TextButton(
                   onPressed: authState.status == AuthStatus.loading
@@ -161,6 +243,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                       : () {
                           setState(() {
                             _isLogin = !_isLogin;
+                            _formKey.currentState?.reset();
                           });
                         },
                   child: Text(

@@ -5,6 +5,7 @@ const {
   loginUser,
   getUserProfile,
   updateEmergencyContacts,
+  googleAuth,
 } = require('../controllers/auth.controller');
 const { protect } = require('../middleware/auth.middleware');
 
@@ -15,6 +16,10 @@ router.post('/register', registerUser);
 // Public route to authenticate an existing user
 // URL: POST /api/auth/login
 router.post('/login', loginUser);
+
+// Public route for Google Account authentication
+// URL: POST /api/auth/google
+router.post('/google', googleAuth);
 
 // Protected route to fetch profile details of current logged-in user
 // URL: GET /api/auth/profile

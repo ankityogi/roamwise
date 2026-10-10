@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../utils/theme.dart';
 import '../providers/auth_provider.dart';
 import '../models/user_model.dart';
+import 'my_bookings_screen.dart';
+import 'hotel_search_screen.dart';
 
 class ProfileTab extends ConsumerStatefulWidget {
   const ProfileTab({super.key});
@@ -128,6 +130,49 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
                   title: const Text('Security & Privacy', style: TextStyle(color: AppColors.textPrimary)),
                   trailing: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
                   onTap: () {},
+                ),
+              ],
+            ),
+          ),
+          // Travel & Bookings Section
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'Travel & Bookings',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Card(
+            child: Column(
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.receipt_long, color: AppColors.accent),
+                  title: const Text('My Hotel Bookings', style: TextStyle(color: AppColors.textPrimary)),
+                  subtitle: const Text('View vouchers and active stays', style: TextStyle(color: AppColors.textSecondary, fontSize: 11)),
+                  trailing: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const MyBookingsScreen()),
+                    );
+                  },
+                ),
+                const Divider(height: 1, color: AppColors.cardBorder),
+                ListTile(
+                  leading: const Icon(Icons.hotel_rounded, color: AppColors.accent),
+                  title: const Text('Find Stays & Hotels', style: TextStyle(color: AppColors.textPrimary)),
+                  subtitle: const Text('Explore luxury resorts & boutique rooms', style: TextStyle(color: AppColors.textSecondary, fontSize: 11)),
+                  trailing: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const HotelSearchScreen()),
+                    );
+                  },
                 ),
               ],
             ),

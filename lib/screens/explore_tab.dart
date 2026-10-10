@@ -5,6 +5,8 @@ import '../utils/theme.dart';
 import '../providers/explore_provider.dart';
 import '../providers/location_provider.dart';
 import '../providers/bookmark_provider.dart';
+import '../models/hotel_model.dart';
+import 'hotel_detail_screen.dart';
 
 class ExploreTab extends ConsumerStatefulWidget {
   const ExploreTab({super.key});
@@ -89,7 +91,6 @@ class _ExploreTabState extends ConsumerState<ExploreTab> {
 
   void _onMapCreated(GoogleMapController controller) {
     _mapController = controller;
-    _mapController?.setMapStyle(_darkMapStyle);
   }
 
   Set<Marker> _buildMarkers(List<PlaceModel> places) {
@@ -291,6 +292,7 @@ class _ExploreTabState extends ConsumerState<ExploreTab> {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(20),
                     child: GoogleMap(
+                      style: _darkMapStyle,
                       initialCameraPosition: CameraPosition(
                         target: ref.watch(locationProvider).currentPosition != null
                             ? LatLng(
@@ -403,6 +405,48 @@ class _ExploreTabState extends ConsumerState<ExploreTab> {
                             return Card(
                               margin: const EdgeInsets.only(bottom: 10),
                               child: ListTile(
+                                onTap: place.category == 'Hotels'
+                                    ? () {
+                                        final double price = double.tryParse(place.price.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 3200.0;
+                                        final hotel = HotelModel(
+                                          id: 'htl-${place.title.hashCode}',
+                                          title: place.title,
+                                          city: exploreState.searchCity,
+                                          address: '${place.title}, ${exploreState.searchCity}',
+                                          rating: place.rating,
+                                          reviewsCount: 180,
+                                          pricePerNight: price,
+                                          distance: place.distance,
+                                          image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80',
+                                          description: 'Boutique hotel in ${exploreState.searchCity}. Offers upscale amenities, comfortable air-conditioned suites, and central connectivity.',
+                                          amenities: ['Free High-Speed WiFi', 'Swimming Pool', 'Complimentary Breakfast', '24/7 Room Service'],
+                                          latitude: place.latitude,
+                                          longitude: place.longitude,
+                                          roomTypes: [
+                                            RoomTypeModel(
+                                              id: 'rm-1',
+                                              name: 'Deluxe Room',
+                                              bed: '1 King Bed',
+                                              maxGuests: 2,
+                                              pricePerNight: price,
+                                              features: ['Free WiFi', 'Air Conditioned', 'City View'],
+                                            ),
+                                            RoomTypeModel(
+                                              id: 'rm-2',
+                                              name: 'Executive Suite',
+                                              bed: '1 King Bed + Lounge',
+                                              maxGuests: 3,
+                                              pricePerNight: price * 1.45,
+                                              features: ['Bathtub', 'Balcony', 'Breakfast Included'],
+                                            ),
+                                          ],
+                                        );
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(builder: (context) => HotelDetailScreen(hotel: hotel)),
+                                        );
+                                      }
+                                    : null,
                                 leading: Container(
                                   padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
@@ -440,7 +484,7 @@ class _ExploreTabState extends ConsumerState<ExploreTab> {
                                     const SizedBox(width: 12),
                                     Builder(
                                       builder: (context) {
-                                        final bookmarkState = ref.watch(bookmarkProvider);
+                                        ref.watch(bookmarkProvider);
                                         final isFav = ref.read(bookmarkProvider.notifier).isBookmarked(place.title);
                                         final bookmarkId = ref.read(bookmarkProvider.notifier).getBookmarkId(place.title);
                                         return IconButton(

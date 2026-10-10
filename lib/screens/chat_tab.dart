@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../utils/theme.dart';
 import '../providers/chat_provider.dart';
 import '../providers/speech_provider.dart';
+import 'vision_scanner_screen.dart';
 
 class ChatTab extends ConsumerStatefulWidget {
   const ChatTab({super.key});
@@ -254,6 +255,16 @@ class _ChatTabState extends ConsumerState<ChatTab> {
                             ),
                             onSubmitted: (v) => _sendMessage(),
                           ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.camera_alt_outlined, color: AppColors.accent, size: 20),
+                          tooltip: 'Scan Landmark or Menu with AI',
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => const VisionScannerScreen()),
+                            );
+                          },
                         ),
                       ],
                     ),

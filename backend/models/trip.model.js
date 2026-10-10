@@ -13,6 +13,20 @@ const timelineEventSchema = new mongoose.Schema({
   description: {
     type: String,
     required: true, // e.g., 'Check in to accommodation and rest'
+  },
+  votes: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+  }],
+  addedBy: {
+    type: String, // name of creator/collaborator
+    default: 'AI Assistant',
+  },
+  latitude: {
+    type: Number,
+  },
+  longitude: {
+    type: Number,
   }
 });
 
@@ -30,7 +44,7 @@ const tripSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true, // Links the trip to the specific registered user
+    required: true, // Owner who created the trip
   },
   title: {
     type: String,
@@ -52,6 +66,29 @@ const tripSchema = new mongoose.Schema({
     type: String,
     required: true, // e.g., 'Cultural', 'Adventure', 'Leisure'
   },
+  inviteCode: {
+    type: String,
+    unique: true,
+    sparse: true,
+    uppercase: true,
+    trim: true,
+  },
+  collaborators: [{
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
+    name: {
+      type: String,
+    },
+    email: {
+      type: String,
+    },
+    joinedAt: {
+      type: Date,
+      default: Date.now,
+    }
+  }],
   itinerarySchedule: [itineraryDaySchema], // Array containing day-by-day events
   createdAt: {
     type: Date,

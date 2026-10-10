@@ -7,6 +7,12 @@ import '../providers/location_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/bookmark_provider.dart';
 import '../providers/explore_provider.dart';
+import 'hotel_search_screen.dart';
+import 'my_bookings_screen.dart';
+import 'vision_scanner_screen.dart';
+import 'offline_guide_screen.dart';
+import 'itinerary_route_map_screen.dart';
+import 'transport_screen.dart';
 
 class DashboardTab extends ConsumerWidget {
   const DashboardTab({super.key});
@@ -334,22 +340,93 @@ class DashboardTab extends ConsumerWidget {
           const SizedBox(height: 24),
 
           // Quick Action Cards
-          Text(
-            'Quick Tools',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Quick Tools',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
+              ),
+              InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const MyBookingsScreen()),
+                  );
+                },
+                child: const Row(
+                  children: [
+                    Icon(Icons.receipt_long, size: 14, color: AppColors.accent),
+                    SizedBox(width: 4),
+                    Text(
+                      'My Bookings',
+                      style: TextStyle(color: AppColors.accent, fontSize: 12, fontWeight: FontWeight.bold),
+                    ),
+                  ],
                 ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           GridView.count(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            crossAxisCount: 3,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-            childAspectRatio: 1.0,
+            crossAxisCount: 4,
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 10,
+            childAspectRatio: 0.85,
             children: [
+              _buildQuickToolItem(
+                context,
+                icon: Icons.hotel_rounded,
+                label: 'Hotels',
+                color: const Color(0xFF00F0FF),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const HotelSearchScreen()),
+                  );
+                },
+              ),
+              _buildQuickToolItem(
+                context,
+                icon: Icons.document_scanner,
+                label: 'AI Lens',
+                color: const Color(0xFFFF9F0A),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const VisionScannerScreen()),
+                  );
+                },
+              ),
+              _buildQuickToolItem(
+                context,
+                icon: Icons.offline_bolt_rounded,
+                label: 'Offline Guide',
+                color: const Color(0xFF00E676),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const OfflineGuideScreen()),
+                  );
+                },
+              ),
+              _buildQuickToolItem(
+                context,
+                icon: Icons.flight_takeoff_rounded,
+                label: 'Transit',
+                color: const Color(0xFFBD00FF),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const TransportScreen()),
+                  );
+                },
+              ),
               _buildQuickToolItem(
                 context,
                 icon: Icons.emergency,
@@ -360,7 +437,7 @@ class DashboardTab extends ConsumerWidget {
               _buildQuickToolItem(
                 context,
                 icon: Icons.g_translate,
-                label: 'Translator',
+                label: 'Translate',
                 color: AppColors.accent,
                 onTap: () {
                   ref.read(activeTabProvider.notifier).state = 2; // AI Chat/Translator tab
@@ -374,6 +451,63 @@ class DashboardTab extends ConsumerWidget {
                 onTap: () => _showSavedBookmarksPanel(context, ref),
               ),
             ],
+          ),
+          const SizedBox(height: 20),
+
+          // Hotel Booking Feature Promotion Banner
+          InkWell(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const HotelSearchScreen()),
+              );
+            },
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.surface,
+                    AppColors.primary.withValues(alpha: 0.35),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                border: Border.all(color: AppColors.accent.withValues(alpha: 0.4)),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppColors.accent.withValues(alpha: 0.15),
+                    ),
+                    child: const Icon(Icons.bed_rounded, color: AppColors.accent, size: 24),
+                  ),
+                  const SizedBox(width: 14),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Book Boutique Stays & Resorts',
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          'Instant reservation • Curated luxury hotels',
+                          style: TextStyle(color: AppColors.textSecondary, fontSize: 11),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(Icons.arrow_forward_ios, size: 14, color: AppColors.accent),
+                ],
+              ),
+            ),
           ),
           const SizedBox(height: 24),
 
@@ -460,6 +594,39 @@ class DashboardTab extends ConsumerWidget {
                               backgroundColor: AppColors.background,
                               color: AppColors.primary,
                               minHeight: 8,
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          InkWell(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ItineraryRouteMapScreen(trip: activeTrip),
+                                ),
+                              );
+                            },
+                            borderRadius: BorderRadius.circular(10),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                              decoration: BoxDecoration(
+                                color: AppColors.accent.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: AppColors.accent.withValues(alpha: 0.4)),
+                              ),
+                              child: const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.route, size: 16, color: AppColors.accent),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'Explore Day Route on Map',
+                                    style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.bold, fontSize: 12),
+                                  ),
+                                  SizedBox(width: 4),
+                                  Icon(Icons.arrow_forward, size: 12, color: AppColors.accent),
+                                ],
+                              ),
                             ),
                           ),
                         ],

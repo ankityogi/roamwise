@@ -38,8 +38,9 @@ dependencies:
   # State Management
   flutter_riverpod: ^2.5.1
 
-  # Networking
+  # Networking & Auth
   dio: ^5.4.3
+  google_sign_in: ^6.2.1
 
   # Fonts & UI
   google_fonts: ^6.2.1
@@ -49,6 +50,9 @@ dependencies:
   geolocator: ^11.0.0
   geocoding: ^3.0.0
   speech_to_text: ^7.4.0
+
+  # Media & Vision
+  image_picker: ^1.1.2
 
   # Storage & Caching
   flutter_secure_storage: ^9.0.0
